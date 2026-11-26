@@ -3,13 +3,9 @@ name: poweru v1.1
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
@@ -17,7 +13,7 @@ permissions:
 
 jobs:
   build:
-    name: Compile, Validate and Package
+    name: Build and Package Plugin
     runs-on: ubuntu-latest
 
     steps:
@@ -31,25 +27,46 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Check Project Structure
+      - name: Find and Prepare plugin.yml
+        shell: bash
         run: |
+          set -euo pipefail
+
           test -f pom.xml || {
             echo "ERROR: pom.xml missing!"
             exit 1
           }
 
-          test -f src/main/resources/plugin.yml || {
-            echo "ERROR: plugin.yml missing!"
-            echo "Expected: src/main/resources/plugin.yml"
+          mapfile -t FILES < <(
+            find . \
+              -type f \
+              -name plugin.yml \
+              -not -path './.git/*' \
+              -not -path './target/*'
+          )
+
+          if [ "${#FILES[@]}" -eq 0 ]; then
+            echo "ERROR: No plugin.yml found anywhere!"
+            find . -maxdepth 5 -type f
             exit 1
-          }
+          fi
 
-          echo "Project structure OK!"
+          if [ "${#FILES[@]}" -gt 1 ]; then
+            echo "ERROR: Multiple plugin.yml files found!"
+            printf '%s\n' "${FILES[@]}"
+            exit 1
+          fi
 
-      - name: Compile and Run Tests
+          mkdir -p src/main/resources
+          cp "${FILES[0]}" src/main/resources/plugin.yml
+
+          echo "plugin.yml successfully prepared!"
+          cat src/main/resources/plugin.yml
+
+      - name: Build Plugin
         run: mvn -B -U clean verify
 
-      - name: Validate Plugin JAR
+      - name: Validate JAR
         shell: bash
         run: |
           set -euo pipefail
@@ -62,56 +79,40 @@ jobs:
           )
 
           if [ "${#JARS[@]}" -ne 1 ]; then
-            echo "ERROR: Expected exactly one plugin JAR!"
-            printf '%s\n' "${JARS[@]}"
+            echo "ERROR: Expected exactly one JAR!"
             exit 1
           fi
 
           JAR="${JARS[0]}"
 
-          echo "Checking: $JAR"
-
-          if ! jar tf "$JAR" | grep -Fxq "plugin.yml"; then
-            echo "ERROR: plugin.yml is missing from JAR root!"
+          jar tf "$JAR" | grep -Fxq "plugin.yml" || {
+            echo "ERROR: plugin.yml missing inside JAR!"
             exit 1
-          fi
+          }
 
-          MAIN_CLASS=$(grep -E '^main:' src/main/resources/plugin.yml \
-            | head -n 1 | sed -E 's/^main:[[:space:]]*//; s/["\x27]//g')
+          MAIN_CLASS=$(sed -n 's/^main:[[:space:]]*//p' \
+            src/main/resources/plugin.yml | head -n 1 | tr -d "\"'")
 
           if [ -z "$MAIN_CLASS" ]; then
-            echo "ERROR: Main class missing in plugin.yml!"
+            echo "ERROR: Main class missing!"
             exit 1
           fi
 
           MAIN_PATH=$(echo "$MAIN_CLASS" | tr '.' '/')
 
-          if ! jar tf "$JAR" | grep -Fxq "$MAIN_PATH.class"; then
-            echo "ERROR: Main class not found inside JAR!"
-            echo "$MAIN_CLASS"
+          jar tf "$JAR" | grep -Fxq "${MAIN_PATH}.class" || {
+            echo "ERROR: Main class missing inside JAR!"
             exit 1
-          fi
+          }
 
-          echo "plugin.yml OK!"
-          echo "Main class OK!"
           echo "JAR validation successful!"
 
-      - name: Prepare Final Plugin
+      - name: Prepare Final JAR
         run: |
           mkdir -p dist
-          JAR=$(find target -maxdepth 1 -type f -name "*.jar" \
-            ! -name "original-*.jar" \
-            ! -name "*-sources.jar" \
-            ! -name "*-javadoc.jar")
-          cp "$JAR" dist/Power.jar
+          cp "${JARS[0]}" dist/Power.jar
 
-      - name: Final Integrity Check
-        run: |
-          test -s dist/Power.jar
-          jar tf dist/Power.jar | grep -Fx "plugin.yml"
-          echo "FINAL BUILD SUCCESSFUL!"
-
-      - name: Upload Final Power.jar
+      - name: Upload Final JAR
         uses: actions/upload-artifact@v7
         with:
           name: Power-Plugin
