@@ -18,55 +18,46 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Java 21
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
           cache: maven
 
-      - name: Detect Project Directory
+      - name: Prepare Maven Project
         shell: bash
         run: |
           set -euo pipefail
 
-          mapfile -t POMS < <(
-            find . -name pom.xml -not -path '*/target/*' \
-              -not -path '*/.git/*'
-          )
+          mkdir -p src/main/java src/main/resources
 
-          if [ "${#POMS[@]}" -ne 1 ]; then
-            echo "ERROR: Expected exactly one pom.xml!"
-            printf '%s\n' "${POMS[@]}"
-            exit 1
-          fi
+          # Java-Dateien in die Maven-Struktur übernehmen
+          find . -maxdepth 1 -name '*.java' -exec cp {} src/main/java/ \;
 
-          PROJECT_DIR=$(dirname "${POMS[0]}")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          # Plugin-Konfiguration übernehmen
+          test -f plugin.yml
+          cp plugin.yml src/main/resources/plugin.yml
 
-          echo "Project directory: $PROJECT_DIR"
+          echo "Java files:"
+          find src/main/java -name '*.java'
 
-          test -f "$PROJECT_DIR/src/main/resources/plugin.yml"
-          test -f "$PROJECT_DIR/src/main/java/de/power/Power.java"
+          echo "Plugin configuration:"
+          test -s src/main/resources/plugin.yml
 
       - name: Build with Maven
-        run: mvn -B clean package
-        working-directory: ${{ env.PROJECT_DIR }}
+        run: mvn -B -U clean package
 
-      - name: Validate Plugin
+      - name: Validate Power.jar
         shell: bash
-        working-directory: ${{ env.PROJECT_DIR }}
         run: |
           set -euo pipefail
 
           JAR="target/Power.jar"
 
-          if [ ! -s "$JAR" ]; then
-            echo "ERROR: Power.jar was not generated!"
-            exit 1
-          fi
+          test -s "$JAR"
 
           echo "Checking plugin.yml..."
           jar tf "$JAR" | grep -Fx "plugin.yml"
@@ -74,17 +65,15 @@ jobs:
           echo "Checking main class..."
           jar tf "$JAR" | grep -Fx "de/power/Power.class"
 
-          echo "Checking compiled package..."
+          echo "Checking compiled classes..."
           jar tf "$JAR" | grep '^de/power/'
 
-          echo "All checks passed!"
+          echo "Power.jar successfully validated!"
 
-      - name: Prepare Final Artifact
+      - name: Prepare Artifact
         run: |
           mkdir -p dist
-          cp "$PROJECT_DIR/target/Power.jar" dist/Power.jar
-
-          test -s dist/Power.jar
+          cp target/Power.jar dist/Power.jar
 
       - name: Upload Power.jar
         uses: actions/upload-artifact@v4
