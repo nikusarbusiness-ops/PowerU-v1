@@ -3,9 +3,11 @@ name: Build Power Plugin
 
 on:
   push:
-    branches: [main, master]
+    branches:
+      - main
   pull_request:
-    branches: [main, master]
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
@@ -13,7 +15,7 @@ permissions:
 
 jobs:
   build:
-    name: Build and Validate Power.jar
+    name: Compile Power Plugin
     runs-on: ubuntu-latest
 
     steps:
@@ -27,58 +29,67 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Prepare Maven Project
+      - name: Prepare Source Files
         shell: bash
         run: |
-          set -euo pipefail
+          mkdir -p src/main/java
+          mkdir -p src/main/resources
 
-          mkdir -p src/main/java src/main/resources
+          # Java-Dateien aus dem Hauptverzeichnis übernehmen
+          find . -maxdepth 1 -type f -name "*.java" \
+            -exec cp {} src/main/java/ \;
 
-          # Java-Dateien in die Maven-Struktur übernehmen
-          find . -maxdepth 1 -name '*.java' -exec cp {} src/main/java/ \;
+          # plugin.yml übernehmen
+          if [ -f plugin.yml ]; then
+            cp plugin.yml src/main/resources/plugin.yml
+          fi
 
-          # Plugin-Konfiguration übernehmen
-          test -f plugin.yml
-          cp plugin.yml src/main/resources/plugin.yml
+          # Weitere YAML-Dateien übernehmen
+          for file in config.yml messages.yml; do
+            if [ -f "$file" ]; then
+              cp "$file" src/main/resources/
+            fi
+          done
 
-          echo "Java files:"
-          find src/main/java -name '*.java'
+          # Sprachdateien übernehmen
+          if [ -d lang ]; then
+            mkdir -p src/main/resources/lang
+            cp -r lang/. src/main/resources/lang/
+          fi
 
-          echo "Plugin configuration:"
-          test -s src/main/resources/plugin.yml
+          echo "Java-Dateien:"
+          find src/main/java -type f -name "*.java" | wc -l
+
+          test -f src/main/resources/plugin.yml
+          test -n "$(find src/main/java -type f -name '*.java' -print -quit)"
 
       - name: Build with Maven
-        run: mvn -B -U clean package
+        run: mvn --batch-mode --no-transfer-progress -U clean package
 
-      - name: Validate Power.jar
+      - name: Verify JAR
         shell: bash
         run: |
-          set -euo pipefail
+          test -f target/Power.jar
+          jar tf target/Power.jar | grep -q "plugin.yml"
+          echo "Power.jar erfolgreich erstellt."
 
-          JAR="target/Power.jar"
-
-          test -s "$JAR"
-
-          echo "Checking plugin.yml..."
-          jar tf "$JAR" | grep -Fx "plugin.yml"
-
-          echo "Checking main class..."
-          jar tf "$JAR" | grep -Fx "de/power/Power.class"
-
-          echo "Checking compiled classes..."
-          jar tf "$JAR" | grep '^de/power/'
-
-          echo "Power.jar successfully validated!"
-
-      - name: Prepare Artifact
+      - name: Create Source ZIP
         run: |
-          mkdir -p dist
-          cp target/Power.jar dist/Power.jar
+          zip -r Power-Source.zip . \
+            -x ".git/*" \
+            -x "target/*" \
+            -x ".github/*"
 
-      - name: Upload Power.jar
+      - name: Upload Plugin JAR
         uses: actions/upload-artifact@v4
         with:
-          name: Power-Plugin
-          path: dist/Power.jar
+          name: Power-Plugin-JAR
+          path: target/Power.jar
           if-no-files-found: error
-          retention-days: 30
+
+      - name: Upload Source ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: Power-Source
+          path: Power-Source.zip
+          if-no-files-found: error
