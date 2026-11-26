@@ -1,3 +1,4 @@
+
 package de.power;
 
 import org.bukkit.Bukkit;
@@ -13,9 +14,18 @@ public final class Tps {
 
     private static double[] tps() {
         try {
-            double[] t = Bukkit.spigot().getTPS();
-            if (t != null && t.length >= 3) return t;
-        } catch (Throwable ignored) { }
+            Object result = Bukkit.getServer()
+                    .getClass()
+                    .getMethod("getTPS")
+                    .invoke(Bukkit.getServer());
+
+            if (result instanceof double[] values && values.length >= 3) {
+                return values;
+            }
+        } catch (ReflectiveOperationException | SecurityException ignored) {
+            // TPS-Methode nicht verfügbar
+        }
+
         return new double[]{20.0, 20.0, 20.0};
     }
 
@@ -28,13 +38,18 @@ public final class Tps {
 
     private static String shown(double t) {
         double v = Math.min(20.0, t);
-        return col(v) + String.format(java.util.Locale.US, "%.1f", v) + (t > 20.0 ? "*" : "");
+        return col(v) + String.format(java.util.Locale.US, "%.1f", v)
+                + (t > 20.0 ? "*" : "");
     }
 
     private static String bar(double t) {
         int total = 20;
-        int filled = (int) Math.round(Math.min(20.0, Math.max(0, t)) / 20.0 * total);
-        return col(t) + "█".repeat(filled) + "§8" + "█".repeat(total - filled);
+        int filled = (int) Math.round(
+                Math.min(20.0, Math.max(0, t)) / 20.0 * total
+        );
+
+        return col(t) + "█".repeat(filled)
+                + "§8" + "█".repeat(total - filled);
     }
 
     private static String state(double t) {
@@ -46,27 +61,56 @@ public final class Tps {
 
     public static void show(Power pl, CommandSender s) {
         double[] t = tps();
+
         Runtime rt = Runtime.getRuntime();
+
         long max = rt.maxMemory() / 1048576L;
         long used = (rt.totalMemory() - rt.freeMemory()) / 1048576L;
+
         int pct = max <= 0 ? 0 : (int) (used * 100 / max);
+
         String ramCol = pct >= 90 ? "§c" : pct >= 75 ? "§e" : "§a";
+
         long up = ManagementFactory.getRuntimeMXBean().getUptime() / 1000;
-        int chunks = 0, entities = 0;
+
+        int chunks = 0;
+        int entities = 0;
+
         for (World w : Bukkit.getWorlds()) {
             chunks += w.getLoadedChunks().length;
             entities += w.getEntities().size();
         }
+
         send(pl, s, "§8§m          §r §b§lServer-Status §8§m          ");
         send(pl, s, "§7Zustand: " + state(t[0]));
-        send(pl, s, "§7TPS §8(1m §7| §85m §7| §815m§8)§7: " + shown(t[0]) + " §8| " + shown(t[1]) + " §8| " + shown(t[2]));
+
+        send(pl, s,
+                "§7TPS §8(1m §7| §85m §7| §815m§8)§7: "
+                        + shown(t[0]) + " §8| "
+                        + shown(t[1]) + " §8| "
+                        + shown(t[2])
+        );
+
         send(pl, s, "§7" + bar(t[0]));
-        send(pl, s, "§7RAM: " + ramCol + used + " MB §8/ §f" + max + " MB §8(" + ramCol + pct + "%§8)");
-        send(pl, s, "§7Spieler: §f" + Bukkit.getOnlinePlayers().size() + "§8/§f" + Bukkit.getMaxPlayers()
-                + " §8| §7Chunks: §f" + chunks + " §8| §7Entities: §f" + entities);
+
+        send(pl, s,
+                "§7RAM: " + ramCol + used
+                        + " MB §8/ §f" + max
+                        + " MB §8(" + ramCol + pct + "%§8)"
+        );
+
+        send(pl, s,
+                "§7Spieler: §f" + Bukkit.getOnlinePlayers().size()
+                        + "§8/§f" + Bukkit.getMaxPlayers()
+                        + " §8| §7Chunks: §f" + chunks
+                        + " §8| §7Entities: §f" + entities
+        );
+
         send(pl, s, "§7Laufzeit: §f" + pl.fmtTime(up));
         send(pl, s, "§8§m                                        ");
     }
 
-    private static void send(Power pl, CommandSender s, String line) { s.sendMessage(Lang.tr(s, line)); }
+    private static void send(Power pl, CommandSender s, String line) {
+        s.sendMessage(Lang.tr(s, line));
+    }
 }
