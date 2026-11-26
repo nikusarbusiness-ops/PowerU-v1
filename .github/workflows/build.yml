@@ -1,0 +1,54 @@
+
+name: poweru
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Compile and Package JAR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Build Plugin
+        run: mvn -B clean package
+
+      - name: Verify JAR
+        shell: bash
+        run: |
+          echo "Checking generated JAR..."
+          if ! find target -maxdepth 1 -type f -name "*.jar" \
+            ! -name "original-*.jar" | grep -q .; then
+            echo "ERROR: No plugin JAR found!"
+            exit 1
+          fi
+          ls -lh target/*.jar
+
+      - name: Upload Plugin JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: Plugin-JAR
+          path: target/*.jar
+          if-no-files-found: error
+          retention-days: 30
