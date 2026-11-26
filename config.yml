@@ -1,0 +1,422 @@
+# ============================================================================
+#  Power - config.yml   (Spigot 1.21.11)
+#  Farbcodes mit & (auch Hex: &#RRGGBB).
+#  Rang-Werte: LuckPerms-Gruppenname -> Wert. Es zaehlt immer der HOECHSTE Wert aus
+#   - Gruppen (Permission group.<name>, auch vererbt)
+#   - Permission power.<bereich>.<zahl>   z.B. power.friends.40
+#   - LuckPerms-Meta power.<bereich>      z.B. /lp group vip meta set power.friends 40
+# ============================================================================
+
+# ------------------------------------------------------------------ Sprache
+language:
+  # Standardsprache fuer Spieler, die noch keine gewaehlt haben (de oder en)
+  default: de
+  # Beim ersten Einloggen das Sprach-GUI zeigen
+  ask-on-first-join: true
+  # Sprachen im GUI (Dateien: plugins/Power/lang/<code>.yml)
+  available:
+    - de
+    - en
+
+# ------------------------------------------------------------------ Scoreboard / Platzhalter
+scoreboard:
+  # Grosse Zahlen verkuerzt anzeigen (40100 -> 40.1k) bei %power_blitze%, %power_blitze_total%, %power_playtime_hours% usw.
+  # Die exakten Werte gibt es immer als %power_..._raw%.
+  compact-numbers: true
+
+# ------------------------------------------------------------------ Teleport
+# Teleport-Verzoegerung in Sekunden (0 = sofort). Bewegen bricht ab.
+teleport-delay: 3
+tpa-timeout-seconds: 60
+
+# ------------------------------------------------------------------ Homes
+homes:
+  default: 3
+  # LuckPerms-Gruppenname -> Anzahl Homes (hoechster Wert gewinnt)
+  ranks:
+    vip: 6
+    mvp: 10
+    admin: 50
+  # Weitere Wege per LuckPerms:
+  #  /lp group vip permission set power.homes.15 true
+  #  /lp group vip meta set power.homes 15
+  #  /lp group admin permission set power.homes.unlimited true
+
+# ------------------------------------------------------------------ Random Teleport
+rtp:
+  world: world
+  # Abstand zur Weltmitte (Worldborder wird automatisch beachtet)
+  min-radius: 10000
+  max-radius: 140000
+  nether-world: world_nether
+  nether-min-radius: 500
+  nether-max-radius: 10000
+  end-world: world_the_end
+  end-min-radius: 0
+  end-max-radius: 80
+  nether-locked: true
+  end-locked: true
+  # Wartezeit zwischen zwei /rtp (Sekunden)
+  cooldown-seconds: 10
+  # Lag-Schutz: pro Server-Tick wird hoechstens EIN Versuch (= ein Chunk) fuer die Suche geladen
+  max-attempts: 30
+  # Chunks rund um das Ziel schon vor dem Teleport nach und nach laden (0 = aus)
+  preload-radius: 2
+  # Biome, in denen nicht gelandet wird (Teil des Biom-Namens)
+  avoid-biomes:
+    - ocean
+    - river
+    - deep
+    - mushroom
+    - frozen_peaks
+    - jagged_peaks
+
+# ------------------------------------------------------------------ AFK-Area / Blitze
+afk:
+  interval-seconds: 60
+  reward: 1
+  # LuckPerms-Gruppe -> Blitze pro Intervall (hoechster Wert gewinnt)
+  # Alternativ: Permission power.afkreward.<zahl> oder Meta power.afkreward
+  rewards:
+    vip: 2
+    mvp: 3
+
+blitz:
+  # kleinste Menge, die man mit /blitz pay senden darf
+  pay-min: 1
+
+# ------------------------------------------------------------------ KeyAll (ExcellentCrates)
+keyall:
+  enabled: true
+  interval-minutes: 60
+  # Key-ID aus ExcellentCrates (Name der Key-Datei). Mehrere Keys moeglich:
+  # keys:
+  #   example: { amount: 1, ranks: { vip: 2 } }
+  #   rare:    { amount: 1 }
+  key: example
+  amount: 1
+  # LuckPerms-Gruppe -> Anzahl Keys (hoechster Wert gewinnt)
+  # Alternativ: Permission power.keyall.<zahl> oder Meta power.keyall
+  ranks:
+    vip: 2
+    mvp: 3
+  # Commands (Konsole). Platzhalter: %player% %key% %amount%
+  commands:
+    - "crates key give %player% %key% %amount%"
+  # Wird nur versucht, wenn der erste Command nicht existiert (z.B. andere ExcellentCrates-Version)
+  fallback-commands:
+    - "excellentcrates key give %player% %key% %amount%"
+    - "crate key give %player% %key% %amount%"
+  message: "&aKeyAll! &7Du hast &e%amount%x %key% &7erhalten."
+
+# ------------------------------------------------------------------ /keys (PlaceholderAPI + ExcellentCrates)
+keys:
+  # Platzhalter fuer die Key-Anzahl, {id} = Key-ID. Es wird der Reihe nach probiert.
+  placeholder: "%excellentcrates_keys_{id}%"
+  fallback-placeholders:
+    - "%excellentcrates_keys_amount_{id}%"
+    - "%excellentcrates_key_{id}%"
+  list:
+    example:
+      name: "&6Beispiel Key"
+      material: TRIPWIRE_HOOK
+
+# ------------------------------------------------------------------ /ranks (Name = LuckPerms-Gruppe, "default" = Gratis-Rang)
+ranks:
+  default:
+    name: "&7Spieler"
+    material: LEATHER_CHESTPLATE
+    perks:
+      - "&7- Standard-Features"
+  vip:
+    name: "&aVIP"
+    material: EMERALD
+    perks:
+      - "&7- /ec (Enderchest)"
+      - "&7- /wb (Werkbank)"
+      - "&7- Chatfarben"
+  mvp:
+    name: "&bMVP"
+    material: DIAMOND
+    perks:
+      - "&7- /ec, /wb, /anvil"
+      - "&7- /repair (1x pro Tag)"
+      - "&7- Chatfarben + Formatierung"
+  admin:
+    name: "&cAdmin"
+    material: NETHER_STAR
+    perks:
+      - "&7- Alle Features"
+
+# ------------------------------------------------------------------ Daily-Belohnung (/daily)
+daily:
+  enabled: true
+  # Zeitzone fuer den Tageswechsel (leer = Server-Zeitzone), z.B. Europe/Vienna
+  timezone: ""
+  # Wie viele Tage man auslassen darf, ohne die Streak zu verlieren (0 = jeden Tag einloggen)
+  grace-days: 0
+  # Nach dem letzten Tag wieder bei Tag 1 anfangen (false = letzte Belohnung wiederholen)
+  loop: true
+  # Beim Login erinnern, wenn die Belohnung bereit ist
+  remind-on-join: true
+  # Belohnungen pro Streak-Tag (bis zu 28 Tage). Pro Tag moeglich:
+  #  name, icon, lore (Liste), blitze, money, items (z.B. "DIAMOND:5"), commands (Konsole, %player%), message
+  rewards:
+    "1":
+      name: "&aTag 1"
+      icon: PAPER
+      blitze: 5
+      money: 250
+    "2":
+      name: "&aTag 2"
+      icon: PAPER
+      blitze: 10
+      money: 500
+    "3":
+      name: "&aTag 3"
+      icon: PAPER
+      blitze: 15
+      money: 750
+    "4":
+      name: "&bTag 4"
+      icon: MAP
+      blitze: 20
+      money: 1000
+    "5":
+      name: "&bTag 5"
+      icon: MAP
+      blitze: 25
+      money: 1500
+      items:
+        - "DIAMOND:3"
+    "6":
+      name: "&6Tag 6"
+      icon: CHEST
+      blitze: 35
+      money: 2000
+    "7":
+      name: "&6&lTag 7 - Jackpot"
+      icon: ENDER_CHEST
+      blitze: 75
+      money: 5000
+      items:
+        - "DIAMOND:8"
+      # commands:
+      #   - "crates key give %player% example 1"
+      message: "&6Jackpot! &7Du hast eine ganze Woche durchgehalten."
+
+# ------------------------------------------------------------------ Chatfarben nach Rang
+chat-colors:
+  enabled: true
+  # Fuer alle Spieler erlaubte Codes (leer = keine)
+  default: []
+  # LuckPerms-Gruppe -> erlaubte Codes. Eintraege:
+  #   einzelne Zeichen (a, b, 6 ...), "colors" (0-9 a-f), "formats" (l m n o r), "magic" (k), "hex" (&#RRGGBB), "all"
+  ranks:
+    vip:
+      - colors
+    mvp:
+      - colors
+      - formats
+    elite:
+      - colors
+      - formats
+      - hex
+    premium:
+      - colors
+      - formats
+    moderator:
+      - all
+    admin:
+      - all
+    owner:
+      - all
+  # Zusaetzlich per Permission: power.chat.color.<zeichen>, power.chat.colors (alle Farben),
+  # power.chat.format, power.chat.magic, power.chat.hex, power.chat.color.* (alles)
+  # (die alte Permission powerbat.chat.color erlaubt weiterhin alles)
+
+# ------------------------------------------------------------------ Freunde
+friends:
+  # Basis-Limit fuer Spieler ohne Rang-Bonus
+  max-friends: 10
+  # LuckPerms-Gruppe -> max. Freunde (Alternativ: Permission power.friends.<zahl> oder Meta power.friends)
+  ranks:
+    vip: 20
+    mvp: 35
+    elite: 50
+    premium: 25
+    moderator: 60
+    admin: 100
+    owner: 150
+  request-expire-seconds: 300
+  # Meldung, wenn ein Freund joint/leavt (jeder Spieler kann das in /settings abschalten)
+  notifications: true
+
+# ------------------------------------------------------------------ Clans
+clan:
+  # Wenn true, braucht man eine der Permissions/Gruppen unten, um einen Clan zu erstellen.
+  create-requires-permission: true
+  # Permissions, die zum Erstellen eines Clans berechtigen (LuckPerms-Nodes).
+  # Tipp: "powerbat.clan.create.default" hier eintragen, damit ALLE Spieler (mit dieser Perm) erstellen duerfen.
+  create-permissions:
+    - powerbat.clan.create.premium
+    - powerbat.clan.create.moderator
+    - powerbat.clan.create.admin
+    - powerbat.clan.create.owner
+    - powerbat.clan.admin
+  # LuckPerms-Gruppen (inkl. Vererbung), die einen Clan erstellen duerfen. Leer lassen, um nur Permissions zu nutzen.
+  create-groups:
+    - premium
+    - moderator
+    - admin
+    - owner
+
+  name-min-length: 3
+  name-max-length: 16
+  # Erlaubte Zeichen im Clan-Namen (Regex)
+  name-pattern: "[A-Za-z0-9_-]+"
+  # Verbotene Clan-Namen (Gross-/Kleinschreibung egal)
+  blocked-names:
+    - admin
+    - staff
+    - owner
+    - moderator
+    - power
+    - powerbat
+
+  # Clan-Tag (Laenge OHNE Farbcodes)
+  tag-min-length: 2
+  tag-max-length: 6
+  allow-tag-colors: true
+
+  default-color: "&7"
+  # Basis-Limit der Mitglieder. Entscheidend ist der Rang des Clan-LEADERS:
+  max-members: 10
+  # LuckPerms-Gruppe des Leaders -> max. Mitglieder (Alternativ: Permission power.clan.members.<zahl> oder Meta power.clan.members)
+  member-limits:
+    vip: 15
+    mvp: 20
+    elite: 30
+    premium: 25
+    moderator: 40
+    admin: 50
+    owner: 100
+  max-description-length: 60
+  invite-expire-seconds: 60
+  # Standard fuer neue Clans: PvP zwischen Clan-Mitgliedern (pro Clan mit /clan pvp umschaltbar)
+  default-pvp: false
+  broadcast-create: true
+
+  # Darstellung. %color% = Clan-Farbe, %tag% = Tag-Text, %name% = Clan-Name
+  # Enthaelt das Tag selbst &-Codes, wird es unveraendert verwendet (z.B. "&6&lPOWER &8|").
+  # Fett/Kursiv/Farben setzt man nur mit speziellem Rang (powerbat.clan.color/.bold/.italic/.format)
+  tag-format: "&8[%color%%tag%&8]"
+  name-format: "%color%%name%"
+
+  # Berechtigungen der Clan-Raenge. Moegliche Werte:
+  # INVITE, KICK, PROMOTE, DEMOTE, EDIT_SETTINGS, MANAGE_INVITES, CLAN_CHAT, DISBAND, TRANSFER, ALL
+  # (DISBAND und TRANSFER sind immer nur fuer den Leader)
+  rank-permissions:
+    LEADER:
+      - ALL
+    CO_LEADER:
+      - INVITE
+      - KICK
+      - PROMOTE
+      - DEMOTE
+      - EDIT_SETTINGS
+      - MANAGE_INVITES
+      - CLAN_CHAT
+    MODERATOR:
+      - INVITE
+      - CLAN_CHAT
+    MEMBER:
+      - CLAN_CHAT
+
+# ------------------------------------------------------------------ Combat
+combat:
+  # Dauer des Combat-Tags in Sekunden (wird bei jedem Treffer zurueckgesetzt)
+  duration-seconds: 20
+  # Verbleibende Zeit in der Actionbar anzeigen
+  show-actionbar: true
+  # Spieler, die im Combat ausloggen, sterben automatisch
+  kill-on-logout: true
+  # Der Gegner verliert den Combat-Status, wenn er den letzten Gegner getoetet hat
+  untag-killer-on-kill: true
+  # Spieler im Creative/Spectator werden nicht in Combat versetzt
+  ignore-creative: true
+  # Befehle im Combat sperren
+  block-commands: true
+  blocked-commands:
+    - spawn
+    - home
+    - homes
+    - tpa
+    - tpahere
+    - tpaccept
+    - warp
+    - back
+    - rtp
+    - rtpq
+    - afk
+    - ec
+    - enderchest
+
+# ------------------------------------------------------------------ Chat / Namensschilder / Tablist
+chat:
+  # false = Power veraendert das Chatformat nicht (z.B. wenn ein anderes Chat-Plugin es verwaltet)
+  manage-format: true
+  # Platzhalter: {prefix} = LuckPerms-Prefix, {clan} = Clan-Tag (inkl. Leerzeichen), {name}, {message}
+  format: "{prefix}{clan}{name}&8: &f{message}"
+  # Clan-Chat. Platzhalter: %clancolor% %clanname% %clantag% %rank% %player% %message%
+  clan-format: "&8[%clancolor%%clanname%&8] &6[%rank%&6] &f%player%&8: &f%message%"
+
+nametag:
+  # Clan-Tag ueber dem Kopf (Scoreboard-Teams). Auf false setzen, falls ein anderes Plugin Nametags verwaltet.
+  enabled: true
+  format: "{clan}"
+
+tablist:
+  enabled: true
+  format: "{prefix}{clan}{name}"
+
+storage:
+  # Automatisches Speichern (Sekunden)
+  autosave-seconds: 120
+
+date-format: "dd.MM.yyyy HH:mm"
+
+# ------------------------------------------------------------------ Wirtschaft (ehemals PowerEco)
+eco:
+  currency:
+    symbol: "$"
+    singular: "Coin"
+    plural: "Coins"
+  start-balance: 1000.0
+  auction:
+    tax-percent: 5.0
+    duration-hours: 48
+    default-max-listings: 10   # Basis-AH-Plaetze; Raenge/Permissions koennen mehr geben
+    min-price: 1.0
+  orders:
+    max-per-player: 5          # Basis-Order-Plaetze; Raenge/Permissions koennen mehr geben
+  sell:
+    default-multiplier: 1.0    # Basis-Verkaufsmultiplikator fuer /sell
+  bounty:
+    min-amount: 100.0
+  # RAENGE: Name = LuckPerms-Gruppe (Permission "group.<name>") oder Permission powereco.rank.<name>.
+  # Es zaehlt immer der hoechste Wert. Zusaetzlich direkte Permissions: powereco.ah.limit.<Zahl>,
+  # powereco.orders.limit.<Zahl>, powereco.sell.multiplier.<Zahl> (z.B. powereco.sell.multiplier.1.2)
+  rank-bonuses:
+    vip:
+      ah-slots: 15
+      order-slots: 8
+      sell-multiplier: 1.1
+    mvp:
+      ah-slots: 20
+      order-slots: 12
+      sell-multiplier: 1.2
+    elite:
+      ah-slots: 30
+      order-slots: 20
+      sell-multiplier: 1.35

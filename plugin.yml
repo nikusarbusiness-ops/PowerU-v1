@@ -1,0 +1,281 @@
+name: Power
+version: 2.0.0
+main: de.power.Power
+api-version: '1.21'
+author: Power
+softdepend: [LuckPerms, PlaceholderAPI, SimpleScore, ExcellentCrates, Vault]
+description: Power - TPA, Homes, RTP, AFK, Blitze, Keys, Economy, Clans, Freunde, Combat, Daily, Settings und mehr in einem Plugin
+commands:
+  # ---------------------------------------------------------------- Teleport
+  tpa:
+    description: Teleport-Anfrage
+    usage: /tpa <Spieler|accept|deny>
+  tpahere:
+    description: Spieler zu dir teleportieren lassen
+  tpaccept:
+    description: Anfrage annehmen
+  tpdeny:
+    description: Anfrage ablehnen
+  tpauto:
+    description: Automatisches Annehmen an/aus
+  home:
+    description: Home-GUI oeffnen oder zu Home teleportieren
+    usage: /home [name]
+  sethome:
+    description: Home setzen
+  delhome:
+    description: Home loeschen
+  homes:
+    description: Home-GUI oeffnen
+  rtp:
+    description: Zufaelliger Teleport (GUI)
+  rtpq:
+    description: Random-Teleport-Queue
+  spawn:
+    description: Zum Spawn teleportieren
+  setspawn:
+    description: Spawn setzen
+  afk:
+    description: AFK-Area
+    usage: /afk [set|areaset pos1|areaset pos2|info]
+  # ---------------------------------------------------------------- Blitze / Keys / Infos
+  blitz:
+    description: Blitz-Shop und Blitze
+    aliases: [blitze]
+    usage: /blitz [balance|pay <Spieler> <Anzahl>]
+  rekord:
+    description: Server-Rekorde
+    aliases: [records, rekorde]
+  news:
+    description: News und neue Features
+    aliases: [features]
+  anvil:
+    description: Amboss oeffnen
+  wb:
+    description: Werkbank oeffnen
+    aliases: [craft, workbench]
+  ec:
+    description: Enderchest oeffnen
+    aliases: [enderchest]
+  repair:
+    description: Item reparieren (1x pro Tag)
+  sign:
+    description: Item signieren
+    usage: /sign [Text]
+  ranks:
+    description: Raenge und Vorteile
+  keys:
+    description: Deine Keys
+  keyall:
+    description: KeyAll-Info
+  daily:
+    description: Taegliche Belohnung und Login-Streak
+    usage: /daily [claim]
+  playtime:
+    description: Deine Spielzeit
+    aliases: [spielzeit]
+  trash:
+    description: Muelleimer oeffnen
+    aliases: [muell, muelleimer]
+  tps:
+    description: Server-Status (TPS, RAM, Chunks)
+  language:
+    description: Sprache waehlen
+    aliases: [sprache, languages]
+  settings:
+    description: Einstellungen
+    aliases: [einstellungen]
+  power:
+    description: Admin-Befehle
+    usage: /power reload
+  # ---------------------------------------------------------------- Economy
+  bal:
+    description: Kontostand anzeigen
+    aliases: [balance, money]
+    permission: powereco.balance
+  pay:
+    description: Geld senden
+    permission: powereco.pay
+  eco:
+    description: Admin-Economy-Befehl
+    permission: powereco.admin
+  baltop:
+    description: Reichste Spieler
+    aliases: [balancetop]
+    permission: powereco.baltop
+  ah:
+    description: Auction House
+    aliases: [auction, auctionhouse]
+    permission: powereco.ah
+  orders:
+    description: Orders (Items bestellen)
+    aliases: [order]
+    permission: powereco.orders
+  bounty:
+    description: Kopfgelder
+    aliases: [kopfgeld]
+    permission: powereco.bounty
+  shop:
+    description: Server-Shop (Perlen, Totems, Crystals ...)
+    aliases: [store, kaufen]
+    permission: powereco.shop
+  sell:
+    description: Items verkaufen
+    aliases: [verkaufen]
+    permission: powereco.sell
+  # ---------------------------------------------------------------- Clans / Freunde / Combat
+  clan:
+    description: Clan-System (oeffnet das Clan-Menue)
+    usage: /clan [help]
+    aliases: [clans]
+  friend:
+    description: Freundesliste
+    usage: /friend <add|accept|deny|remove|list|msg|reply>
+    aliases: [friends, freunde, fr]
+  powerbat:
+    description: Combat- und Clan-Administration
+    usage: /powerbat <reload|version|info|combat|endcombat|clan>
+    aliases: [pb]
+permissions:
+  power.admin:
+    default: op
+  power.setspawn:
+    default: op
+  power.bypass:
+    default: op
+  power.afk.admin:
+    default: op
+  power.blitz.admin:
+    default: op
+  power.blitz.pay:
+    default: true
+  power.news.admin:
+    default: op
+  power.anvil:
+    default: op
+  power.wb:
+    default: op
+  power.ec:
+    default: op
+  power.repair:
+    default: op
+  power.repair.unlimited:
+    default: false
+  power.sign:
+    default: op
+  power.rtp.nether:
+    default: false
+  power.rtp.end:
+    default: false
+  power.daily:
+    default: true
+  power.playtime:
+    default: true
+  power.trash:
+    default: true
+  power.tps:
+    default: true
+  power.language:
+    default: true
+  power.settings:
+    default: true
+  power.chat.colors:
+    description: Alle Farbcodes (0-9, a-f) im Chat
+    default: false
+  power.chat.format:
+    description: Formatierungen (&l &m &n &o &r) im Chat
+    default: false
+  power.chat.magic:
+    description: Magischer Text (&k) im Chat
+    default: false
+  power.chat.hex:
+    description: Hex-Farben (&#RRGGBB) im Chat
+    default: false
+  power.chat.color.*:
+    description: Alle Chat-Farben, Formatierungen und Hex
+    default: false
+    children:
+      power.chat.colors: true
+      power.chat.format: true
+      power.chat.magic: true
+      power.chat.hex: true
+  # ---------------------------------------------------------------- Economy
+  powereco.balance: {default: true}
+  powereco.balance.others: {default: true}
+  powereco.pay: {default: true}
+  powereco.baltop: {default: true}
+  powereco.ah: {default: true}
+  powereco.orders: {default: true}
+  powereco.bounty: {default: true}
+  powereco.shop: {default: true}
+  powereco.sell: {default: true}
+  powereco.admin: {default: op}
+  powereco.hologram: {default: op}
+  # ---------------------------------------------------------------- Clans / Freunde / Combat
+  powerbat.admin:
+    description: Voller Zugriff auf alle Admin-Funktionen
+    default: op
+    children:
+      powerbat.reload: true
+      powerbat.clan.admin: true
+      powerbat.clan.use: true
+      powerbat.chat.color: true
+      powerbat.clan.color: true
+      powerbat.clan.bold: true
+      powerbat.clan.italic: true
+      powerbat.clan.format: true
+      powerbat.friend.use: true
+  powerbat.friend.use:
+    description: /friend benutzen
+    default: true
+  powerbat.clan.color:
+    description: Clan-Farbe und farbige Tags/Beschreibungen setzen
+    default: false
+  powerbat.clan.bold:
+    description: Fettschrift (&l) in Clan-Tag/Beschreibung
+    default: false
+  powerbat.clan.italic:
+    description: Kursivschrift (&o) in Clan-Tag/Beschreibung
+    default: false
+  powerbat.clan.format:
+    description: Unterstrichen, durchgestrichen, magisch (&n &m &k)
+    default: false
+  powerbat.reload:
+    description: /powerbat reload
+    default: op
+  powerbat.clan.admin:
+    description: Clans anderer Spieler verwalten
+    default: op
+  powerbat.clan.use:
+    description: /clan benutzen (Beitreten, Chat, Menue)
+    default: true
+  powerbat.combat.bypass:
+    description: Wird nie in Combat versetzt und stirbt nicht beim Logout
+    default: false
+  powerbat.chat.color:
+    description: Alle Farbcodes (&) in Chatnachrichten verwenden
+    default: false
+  powerbat.clan.create.default:
+    description: Clan erstellen (Standard-Rang) - nur wirksam, wenn in config.yml eingetragen
+    default: false
+  powerbat.clan.create.premium:
+    description: Clan erstellen (Premium)
+    default: false
+  powerbat.clan.create.moderator:
+    description: Clan erstellen (Moderator)
+    default: false
+  powerbat.clan.create.admin:
+    description: Clan erstellen (Admin)
+    default: false
+  powerbat.clan.create.owner:
+    description: Clan erstellen (Owner)
+    default: false
+  powerbat.clan.create.*:
+    description: Alle Clan-Erstellungs-Permissions
+    default: false
+    children:
+      powerbat.clan.create.default: true
+      powerbat.clan.create.premium: true
+      powerbat.clan.create.moderator: true
+      powerbat.clan.create.admin: true
+      powerbat.clan.create.owner: true
