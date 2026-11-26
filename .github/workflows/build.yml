@@ -1,5 +1,5 @@
 
-name: poweru v1.0
+name: poweru v1.1
 
 on:
   push:
@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   build:
-    name: Compile and Package JAR
+    name: Compile, Validate and Package
     runs-on: ubuntu-latest
 
     steps:
@@ -31,23 +31,90 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Build Plugin
-        run: mvn -B clean package
+      - name: Check Project Structure
+        run: |
+          test -f pom.xml || {
+            echo "ERROR: pom.xml missing!"
+            exit 1
+          }
 
-      - name: Verify JAR
+          test -f src/main/resources/plugin.yml || {
+            echo "ERROR: plugin.yml missing!"
+            echo "Expected: src/main/resources/plugin.yml"
+            exit 1
+          }
+
+          echo "Project structure OK!"
+
+      - name: Compile and Run Tests
+        run: mvn -B -U clean verify
+
+      - name: Validate Plugin JAR
         shell: bash
         run: |
-          echo "Checking generated JAR..."
-          if ! find target -maxdepth 1 -type f -name "*.jar" ! -name "original-*.jar" | grep -q .; then
-            echo "ERROR: No plugin JAR found!"
+          set -euo pipefail
+
+          mapfile -t JARS < <(
+            find target -maxdepth 1 -type f -name "*.jar" \
+              ! -name "original-*.jar" \
+              ! -name "*-sources.jar" \
+              ! -name "*-javadoc.jar"
+          )
+
+          if [ "${#JARS[@]}" -ne 1 ]; then
+            echo "ERROR: Expected exactly one plugin JAR!"
+            printf '%s\n' "${JARS[@]}"
             exit 1
           fi
-          ls -lh target/*.jar
 
-      - name: Upload Plugin JAR
+          JAR="${JARS[0]}"
+
+          echo "Checking: $JAR"
+
+          if ! jar tf "$JAR" | grep -Fxq "plugin.yml"; then
+            echo "ERROR: plugin.yml is missing from JAR root!"
+            exit 1
+          fi
+
+          MAIN_CLASS=$(grep -E '^main:' src/main/resources/plugin.yml \
+            | head -n 1 | sed -E 's/^main:[[:space:]]*//; s/["\x27]//g')
+
+          if [ -z "$MAIN_CLASS" ]; then
+            echo "ERROR: Main class missing in plugin.yml!"
+            exit 1
+          fi
+
+          MAIN_PATH=$(echo "$MAIN_CLASS" | tr '.' '/')
+
+          if ! jar tf "$JAR" | grep -Fxq "$MAIN_PATH.class"; then
+            echo "ERROR: Main class not found inside JAR!"
+            echo "$MAIN_CLASS"
+            exit 1
+          fi
+
+          echo "plugin.yml OK!"
+          echo "Main class OK!"
+          echo "JAR validation successful!"
+
+      - name: Prepare Final Plugin
+        run: |
+          mkdir -p dist
+          JAR=$(find target -maxdepth 1 -type f -name "*.jar" \
+            ! -name "original-*.jar" \
+            ! -name "*-sources.jar" \
+            ! -name "*-javadoc.jar")
+          cp "$JAR" dist/Power.jar
+
+      - name: Final Integrity Check
+        run: |
+          test -s dist/Power.jar
+          jar tf dist/Power.jar | grep -Fx "plugin.yml"
+          echo "FINAL BUILD SUCCESSFUL!"
+
+      - name: Upload Final Power.jar
         uses: actions/upload-artifact@v7
         with:
-          name: Plugin-JAR
-          path: target/*.jar
+          name: Power-Plugin
+          path: dist/Power.jar
           if-no-files-found: error
           retention-days: 30
